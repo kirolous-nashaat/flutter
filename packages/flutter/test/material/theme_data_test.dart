@@ -358,6 +358,7 @@ void main() {
       dividerTheme: const DividerThemeData(color: Colors.black),
       buttonBarTheme: const ButtonBarThemeData(alignment: MainAxisAlignment.start),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(type: BottomNavigationBarType.fixed),
+      datePickerTheme: const DatePickerThemeData(backgroundColor: Colors.black),
       timePickerTheme: const TimePickerThemeData(backgroundColor: Colors.black),
       textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(primary: Colors.red)),
       elevatedButtonTheme: ElevatedButtonThemeData(style: ElevatedButton.styleFrom(primary: Colors.green)),
@@ -457,6 +458,7 @@ void main() {
       dividerTheme: const DividerThemeData(color: Colors.white),
       buttonBarTheme: const ButtonBarThemeData(alignment: MainAxisAlignment.end),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(type: BottomNavigationBarType.shifting),
+      datePickerTheme: const DatePickerThemeData(backgroundColor: Colors.white),
       timePickerTheme: const TimePickerThemeData(backgroundColor: Colors.white),
       textButtonTheme: const TextButtonThemeData(),
       elevatedButtonTheme: const ElevatedButtonThemeData(),
@@ -537,6 +539,7 @@ void main() {
       dividerTheme: otherTheme.dividerTheme,
       buttonBarTheme: otherTheme.buttonBarTheme,
       bottomNavigationBarTheme: otherTheme.bottomNavigationBarTheme,
+      datePickerTheme: otherTheme.datePickerTheme,
       timePickerTheme: otherTheme.timePickerTheme,
       textButtonTheme: otherTheme.textButtonTheme,
       elevatedButtonTheme: otherTheme.elevatedButtonTheme,
@@ -614,6 +617,7 @@ void main() {
     expect(themeDataCopy.dividerTheme, equals(otherTheme.dividerTheme));
     expect(themeDataCopy.buttonBarTheme, equals(otherTheme.buttonBarTheme));
     expect(themeDataCopy.bottomNavigationBarTheme, equals(otherTheme.bottomNavigationBarTheme));
+    expect(themeDataCopy.datePickerTheme, equals(otherTheme.datePickerTheme));
     expect(themeDataCopy.timePickerTheme, equals(otherTheme.timePickerTheme));
     expect(themeDataCopy.textButtonTheme, equals(otherTheme.textButtonTheme));
     expect(themeDataCopy.elevatedButtonTheme, equals(otherTheme.elevatedButtonTheme));
@@ -743,6 +747,7 @@ void main() {
       'tabBarTheme',
       'textButtonTheme',
       'textSelectionTheme',
+      'datePickerTheme',
       'timePickerTheme',
       'toggleButtonsTheme',
       'tooltipTheme',
