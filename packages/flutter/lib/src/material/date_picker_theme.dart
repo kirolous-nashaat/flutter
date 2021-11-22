@@ -5,7 +5,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import 'input_decorator.dart';
 import 'theme.dart';
 
 /// Defines the visual properties of the widget displayed with [showDatePicker].
@@ -131,8 +130,10 @@ class DatePickerThemeData with Diagnosticable {
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other.runtimeType != runtimeType) return false;
+    if (identical(this, other))
+      return true;
+    if (other.runtimeType != runtimeType)
+      return false;
     return other is DatePickerThemeData &&
         other.backgroundColor == backgroundColor &&
         other.entryModeIconColor == entryModeIconColor &&
