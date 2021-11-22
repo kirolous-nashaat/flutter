@@ -28,7 +28,6 @@ import 'theme.dart';
 ///    picker theme.
 @immutable
 class DatePickerThemeData with Diagnosticable {
-
   /// Creates a theme that can be used for [DatePickerTheme] or
   /// [ThemeData.datePickerTheme].
   const DatePickerThemeData({
@@ -36,6 +35,9 @@ class DatePickerThemeData with Diagnosticable {
     this.entryModeIconColor,
     this.helpTextStyle,
     this.shape,
+    this.selectedDayDecoration,
+    this.disabledDayDecoration,
+    this.todayDecoration,
   });
 
   /// The background color of a date picker.
@@ -62,36 +64,37 @@ class DatePickerThemeData with Diagnosticable {
 
   /// The shape of the [Dialog] that the date picker is presented in.
   ///
-  /// If this is null, the date picker defaults to
-  /// `RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4.0)))`.
+  /// The default shape is a [RoundedRectangleBorder] with a radius of 4.0
   final ShapeBorder? shape;
+
+  /// The box decoration of selected day.
+  final BoxDecoration? selectedDayDecoration;
+
+  /// The box decoration of disabled day.
+  final BoxDecoration? disabledDayDecoration;
+
+  /// The box decoration of today.
+  final BoxDecoration? todayDecoration;
 
   /// Creates a copy of this object with the given fields replaced with the
   /// new values.
   DatePickerThemeData copyWith({
     Color? backgroundColor,
-    Color? hourMinuteTextColor,
-    Color? hourMinuteColor,
-    Color? dayPeriodTextColor,
-    Color? dayPeriodColor,
-    Color? dialHandColor,
-    Color? dialBackgroundColor,
-    Color? dialTextColor,
     Color? entryModeIconColor,
-    TextStyle? hourMinuteTextStyle,
-    TextStyle? dayPeriodTextStyle,
     TextStyle? helpTextStyle,
     ShapeBorder? shape,
-    ShapeBorder? hourMinuteShape,
-    OutlinedBorder? dayPeriodShape,
-    BorderSide? dayPeriodBorderSide,
-    InputDecorationTheme? inputDecorationTheme,
+    BoxDecoration? selectedDayDecoration,
+    BoxDecoration? disabledDayDecoration,
+    BoxDecoration? todayDecoration,
   }) {
     return DatePickerThemeData(
       backgroundColor: backgroundColor ?? this.backgroundColor,
       entryModeIconColor: entryModeIconColor ?? this.entryModeIconColor,
       helpTextStyle: helpTextStyle ?? this.helpTextStyle,
       shape: shape ?? this.shape,
+      selectedDayDecoration: selectedDayDecoration ?? this.selectedDayDecoration,
+      disabledDayDecoration: disabledDayDecoration ?? this.disabledDayDecoration,
+      todayDecoration: todayDecoration ?? this.todayDecoration,
     );
   }
 
@@ -107,6 +110,9 @@ class DatePickerThemeData with Diagnosticable {
       entryModeIconColor: Color.lerp(a?.entryModeIconColor, b?.entryModeIconColor, t),
       helpTextStyle: TextStyle.lerp(a?.helpTextStyle, b?.helpTextStyle, t),
       shape: ShapeBorder.lerp(a?.shape, b?.shape, t),
+      selectedDayDecoration: BoxDecoration.lerp(a?.selectedDayDecoration, b?.selectedDayDecoration, t),
+      disabledDayDecoration: BoxDecoration.lerp(a?.disabledDayDecoration, b?.disabledDayDecoration, t),
+      todayDecoration: BoxDecoration.lerp(a?.todayDecoration, b?.todayDecoration, t),
     );
   }
 
@@ -117,20 +123,24 @@ class DatePickerThemeData with Diagnosticable {
       entryModeIconColor,
       helpTextStyle,
       shape,
+      selectedDayDecoration,
+      disabledDayDecoration,
+      todayDecoration,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other))
-      return true;
-    if (other.runtimeType != runtimeType)
-      return false;
-    return other is DatePickerThemeData
-        && other.backgroundColor == backgroundColor
-        && other.entryModeIconColor == entryModeIconColor
-        && other.helpTextStyle == helpTextStyle
-        && other.shape == shape;
+    if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+    return other is DatePickerThemeData &&
+        other.backgroundColor == backgroundColor &&
+        other.entryModeIconColor == entryModeIconColor &&
+        other.helpTextStyle == helpTextStyle &&
+        other.shape == shape &&
+        other.selectedDayDecoration == selectedDayDecoration &&
+        other.disabledDayDecoration == disabledDayDecoration &&
+        other.todayDecoration == todayDecoration;
   }
 
   @override
@@ -140,6 +150,9 @@ class DatePickerThemeData with Diagnosticable {
     properties.add(ColorProperty('entryModeIconColor', entryModeIconColor, defaultValue: null));
     properties.add(DiagnosticsProperty<TextStyle>('helpTextStyle', helpTextStyle, defaultValue: null));
     properties.add(DiagnosticsProperty<ShapeBorder>('shape', shape, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxDecoration>('selectedDayDecoration', selectedDayDecoration, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxDecoration>('disabledDayDecoration', disabledDayDecoration, defaultValue: null));
+    properties.add(DiagnosticsProperty<BoxDecoration>('todayDecoration', todayDecoration, defaultValue: null));
   }
 }
 
@@ -155,7 +168,7 @@ class DatePickerTheme extends InheritedTheme {
     Key? key,
     required this.data,
     required Widget child,
-  }) : assert(data != null),
+  })  : assert(data != null),
         super(key: key, child: child);
 
   /// The properties for descendant date picker widgets.

@@ -492,6 +492,9 @@ class _DatePickerDialogState extends State<DatePickerDialog> with RestorationMix
         onDateChanged: _handleDateChanged,
         selectableDayPredicate: widget.selectableDayPredicate,
         initialCalendarMode: widget.initialCalendarMode,
+        selectedDayDecoration: datePickerThemeData.selectedDayDecoration,
+        disabledDayDecoration: datePickerThemeData.disabledDayDecoration,
+        todayDecoration: datePickerThemeData.todayDecoration,
       );
     }
 
