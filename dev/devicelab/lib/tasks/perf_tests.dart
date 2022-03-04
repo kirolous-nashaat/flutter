@@ -215,6 +215,15 @@ TaskFunction createPictureCachePerfE2ETest() {
   ).run;
 }
 
+TaskFunction createPictureCacheComplexityScoringPerfTest() {
+  return PerfTest(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test_driver/run_app.dart',
+    'picture_cache_complexity_scoring_perf',
+    testDriver: 'test_driver/picture_cache_complexity_scoring_perf_test.dart',
+  ).run;
+}
+
 TaskFunction createFlutterGalleryStartupTest({String target = 'lib/main.dart'}) {
   return StartupTest(
     '${flutterDirectory.path}/dev/integration_tests/flutter_gallery',
@@ -482,6 +491,55 @@ TaskFunction createFramePolicyIntegrationTest() {
       );
     });
   };
+}
+
+TaskFunction createOpacityPeepholeOneRectPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_one_rect_perf_e2e.dart',
+  ).run;
+}
+
+TaskFunction createOpacityPeepholeColOfRowsPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_col_of_rows_perf_e2e.dart',
+  ).run;
+}
+
+TaskFunction createOpacityPeepholeOpacityOfGridPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_opacity_of_grid_perf_e2e.dart',
+  ).run;
+}
+
+TaskFunction createOpacityPeepholeGridOfOpacityPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_grid_of_opacity_perf_e2e.dart',
+  ).run;
+}
+
+TaskFunction createOpacityPeepholeFadeTransitionTextPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_fade_transition_text_perf_e2e.dart',
+  ).run;
+}
+
+TaskFunction createOpacityPeepholeGridOfAlphaSaveLayersPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_grid_of_alpha_savelayers_perf_e2e.dart',
+  ).run;
+}
+
+TaskFunction createOpacityPeepholeColOfAlphaSaveLayerRowsPerfE2ETest() {
+  return PerfTest.e2e(
+    '${flutterDirectory.path}/dev/benchmarks/macrobenchmarks',
+    'test/opacity_peephole_col_of_alpha_savelayer_rows_perf_e2e.dart',
+  ).run;
 }
 
 Map<String, dynamic> _average(List<Map<String, dynamic>> results, int iterations) {
@@ -812,12 +870,14 @@ class PerfTest {
       final Device device = await devices.workingDevice;
       await device.unlock();
       final String deviceId = device.deviceId;
+      final String? localEngine = localEngineFromEnv;
+      final String? localEngineSrcPath = localEngineSrcPathFromEnv;
 
       await flutter('drive', options: <String>[
         if (localEngine != null)
-          ...<String>['--local-engine', localEngine!],
+          ...<String>['--local-engine', localEngine],
         if (localEngineSrcPath != null)
-          ...<String>['--local-engine-src-path', localEngineSrcPath!],
+          ...<String>['--local-engine-src-path', localEngineSrcPath],
         '--no-dds',
         '--no-android-gradle-daemon',
         '-v',
@@ -993,15 +1053,16 @@ class PerfTestWithSkSL extends PerfTest {
     if (File(_vmserviceFileName).existsSync()) {
       File(_vmserviceFileName).deleteSync();
     }
-
+    final String? localEngine = localEngineFromEnv;
+    final String? localEngineSrcPath = localEngineSrcPathFromEnv;
     _runProcess = await startProcess(
       _flutterPath,
       <String>[
         'run',
         if (localEngine != null)
-          ...<String>['--local-engine', localEngine!],
+          ...<String>['--local-engine', localEngine],
         if (localEngineSrcPath != null)
-          ...<String>['--local-engine-src-path', localEngineSrcPath!],
+          ...<String>['--local-engine-src-path', localEngineSrcPath],
         '--no-dds',
         if (deviceOperatingSystem == DeviceOperatingSystem.ios)
           ...<String>[

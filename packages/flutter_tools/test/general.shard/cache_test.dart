@@ -319,6 +319,17 @@ void main() {
 
       expect(() => cache.storageBaseUrl, throwsToolExit());
     });
+
+    testWithoutContext('PubDependencies should be registered as web based', () async {
+      final BufferLogger logger = BufferLogger.test();
+      final PubDependencies pubDependencies = PubDependencies(
+        flutterRoot: () => '',
+        logger: logger,
+        pub: () => FakePub(),
+      );
+
+      expect(pubDependencies.developmentArtifact, DevelopmentArtifact.web);
+    });
   });
 
   testWithoutContext('flattenNameSubdirs', () {
@@ -557,6 +568,19 @@ void main() {
       ]);
   });
 
+  testWithoutContext('macOS desktop artifacts include all gen_snapshot binaries', () {
+    final Cache cache = Cache.test(processManager: FakeProcessManager.any());
+    final MacOSEngineArtifacts artifacts = MacOSEngineArtifacts(cache, platform: FakePlatform());
+    cache.includeAllPlatforms = false;
+    cache.platformOverrideArtifacts = <String>{'macos'};
+
+    expect(artifacts.getBinaryDirs(), containsAll(<List<String>>[
+      <String>['darwin-x64', 'darwin-x64/gen_snapshot.zip'],
+      <String>['darwin-x64-profile', 'darwin-x64-profile/gen_snapshot.zip'],
+      <String>['darwin-x64-release', 'darwin-x64-release/gen_snapshot.zip'],
+    ]));
+  });
+
   testWithoutContext('macOS desktop artifacts ignore filtering when requested', () {
     final Cache cache = Cache.test(processManager: FakeProcessManager.any());
     final MacOSEngineArtifacts artifacts = MacOSEngineArtifacts(cache, platform: FakePlatform());
@@ -730,13 +754,17 @@ void main() {
 
   testWithoutContext('FlutterWebSdk fetches web artifacts and deletes previous directory contents', () async {
     final MemoryFileSystem fileSystem = MemoryFileSystem.test();
-    final File canvasKitVersionFile = fileSystem.currentDirectory
+    final Directory internalDir = fileSystem.currentDirectory
       .childDirectory('cache')
       .childDirectory('bin')
-      .childDirectory('internal')
-      .childFile('canvaskit.version');
+      .childDirectory('internal');
+    final File canvasKitVersionFile = internalDir.childFile('canvaskit.version');
     canvasKitVersionFile.createSync(recursive: true);
     canvasKitVersionFile.writeAsStringSync('abcdefg');
+
+    final File engineVersionFile = internalDir.childFile('engine.version');
+    engineVersionFile.createSync(recursive: true);
+    engineVersionFile.writeAsStringSync('hijklmnop');
 
     final Cache cache = Cache.test(processManager: FakeProcessManager.any(), fileSystem: fileSystem);
     final Directory webCacheDirectory = cache.getWebSdkDirectory();
@@ -763,7 +791,7 @@ void main() {
     ]);
 
     expect(downloads, <String>[
-      'https://storage.googleapis.com/flutter_infra_release/flutter/null/flutter-web-sdk-linux-x64.zip',
+      'https://storage.googleapis.com/flutter_infra_release/flutter/hijklmnop/flutter-web-sdk-linux-x64.zip',
       'https://chrome-infra-packages.appspot.com/dl/flutter/web/canvaskit_bundle/+/abcdefg',
     ]);
 
@@ -774,6 +802,51 @@ void main() {
 
     expect(webCacheDirectory.childFile('foo'), exists);
     expect(webCacheDirectory.childFile('bar'), isNot(exists));
+  });
+
+  testWithoutContext('FlutterWebSdk CanvasKit URL can be overridden via FLUTTER_STORAGE_BASE_URL', () async {
+    final MemoryFileSystem fileSystem = MemoryFileSystem.test();
+    final Directory internalDir = fileSystem.currentDirectory
+      .childDirectory('cache')
+      .childDirectory('bin')
+      .childDirectory('internal');
+    final File canvasKitVersionFile = internalDir.childFile('canvaskit.version');
+    canvasKitVersionFile.createSync(recursive: true);
+    canvasKitVersionFile.writeAsStringSync('abcdefg');
+
+    final File engineVersionFile = internalDir.childFile('engine.version');
+    engineVersionFile.createSync(recursive: true);
+    engineVersionFile.writeAsStringSync('hijklmnop');
+
+    final Cache cache = Cache.test(
+      processManager: FakeProcessManager.any(),
+      fileSystem: fileSystem,
+      platform: FakePlatform(
+        environment: <String, String>{
+          'FLUTTER_STORAGE_BASE_URL': 'https://flutter.storage.com/override'
+        },
+      ),
+    );
+    final Directory webCacheDirectory = cache.getWebSdkDirectory();
+    final FakeArtifactUpdater artifactUpdater = FakeArtifactUpdater();
+    final FlutterWebSdk webSdk = FlutterWebSdk(cache, platform: FakePlatform());
+
+    final List<String> downloads = <String>[];
+    final List<String> locations = <String>[];
+    artifactUpdater.onDownloadZipArchive = (String message, Uri uri, Directory location) {
+      downloads.add(uri.toString());
+      locations.add(location.path);
+      location.createSync(recursive: true);
+      location.childFile('foo').createSync();
+    };
+    webCacheDirectory.childFile('bar').createSync(recursive: true);
+
+    await webSdk.updateInner(artifactUpdater, fileSystem, FakeOperatingSystemUtils());
+
+    expect(downloads, <String>[
+      'https://flutter.storage.com/override/flutter_infra_release/flutter/hijklmnop/flutter-web-sdk-linux-x64.zip',
+      'https://flutter.storage.com/override/flutter_infra_release/cipd/flutter/web/canvaskit_bundle/+/abcdefg'
+    ]);
   });
 
   testWithoutContext('FlutterWebSdk uses tryToDelete to handle directory edge cases', () async {
@@ -1009,19 +1082,6 @@ class FakeSimpleArtifact extends CachedArtifact {
     cache,
     DevelopmentArtifact.universal,
   );
-
-  @override
-  Future<void> updateInner(ArtifactUpdater artifactUpdater, FileSystem fileSystem, OperatingSystemUtils operatingSystemUtils) async { }
-}
-
-class FakeDownloadedArtifact extends CachedArtifact {
-  FakeDownloadedArtifact(this.downloadedFile, Cache cache) : super(
-    'fake',
-    cache,
-    DevelopmentArtifact.universal,
-  );
-
-  final File downloadedFile;
 
   @override
   Future<void> updateInner(ArtifactUpdater artifactUpdater, FileSystem fileSystem, OperatingSystemUtils operatingSystemUtils) async { }

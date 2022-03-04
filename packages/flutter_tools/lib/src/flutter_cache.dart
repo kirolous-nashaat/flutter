@@ -74,7 +74,7 @@ class PubDependencies extends ArtifactSet {
   }) : _logger = logger,
        _flutterRoot = flutterRoot,
        _pub = pub,
-       super(DevelopmentArtifact.universal);
+       super(DevelopmentArtifact.web);
 
   final String Function() _flutterRoot;
   final Logger _logger;
@@ -198,7 +198,7 @@ class FlutterWebSdk extends CachedArtifact {
     }
 
     final String canvasKitVersion = cache.getVersionFor('canvaskit')!;
-    final String canvasKitUrl = '$_cipdBaseUrl/flutter/web/canvaskit_bundle/+/$canvasKitVersion';
+    final String canvasKitUrl = '${cache.cipdBaseUrl}/flutter/web/canvaskit_bundle/+/$canvasKitVersion';
     return artifactUpdater.downloadZipArchive(
       'Downloading CanvasKit...',
       Uri.parse(canvasKitUrl),
@@ -575,8 +575,6 @@ class GradleWrapper extends CachedArtifact {
   }
 }
 
-const String _cipdBaseUrl = 'https://chrome-infra-packages.appspot.com/dl';
-
 /// Common functionality for pulling Fuchsia SDKs.
 abstract class _FuchsiaSDKArtifacts extends CachedArtifact {
   _FuchsiaSDKArtifacts(Cache cache, String platform) :
@@ -593,7 +591,7 @@ abstract class _FuchsiaSDKArtifacts extends CachedArtifact {
   Directory get location => cache.getArtifactDirectory('fuchsia');
 
   Future<void> _doUpdate(ArtifactUpdater artifactUpdater) {
-    final String url = '$_cipdBaseUrl/$_path/+/$version';
+    final String url = '${cache.cipdBaseUrl}/$_path/+/$version';
     return artifactUpdater.downloadZipArchive('Downloading package fuchsia SDK...',
                                Uri.parse(url), location);
   }
@@ -627,7 +625,7 @@ class FlutterRunnerSDKArtifacts extends CachedArtifact {
     if (!_platform.isLinux && !_platform.isMacOS) {
       return;
     }
-    final String url = '$_cipdBaseUrl/flutter/fuchsia/+/git_revision:$version';
+    final String url = '${cache.cipdBaseUrl}/flutter/fuchsia/+/git_revision:$version';
     await artifactUpdater.downloadZipArchive('Downloading package flutter runner...', Uri.parse(url), location);
   }
 }
@@ -644,11 +642,13 @@ abstract class VersionedPackageResolver {
 
 /// Resolves the CIPD archive URL for a given package and version.
 class CipdArchiveResolver extends VersionedPackageResolver {
-  const CipdArchiveResolver();
+  const CipdArchiveResolver(this.cache);
+
+  final Cache cache;
 
   @override
   String resolveUrl(String packageName, String version) {
-    return '$_cipdBaseUrl/flutter/$packageName/+/git_revision:$version';
+    return '${cache.cipdBaseUrl}/flutter/$packageName/+/git_revision:$version';
   }
 }
 
@@ -656,9 +656,10 @@ class CipdArchiveResolver extends VersionedPackageResolver {
 class FlutterRunnerDebugSymbols extends CachedArtifact {
   FlutterRunnerDebugSymbols(Cache cache, {
     required Platform platform,
-    this.packageResolver = const CipdArchiveResolver(),
+    VersionedPackageResolver? packageResolver,
   }) : _platform = platform,
-      super('flutter_runner_debug_symbols', cache, DevelopmentArtifact.flutterRunner);
+       packageResolver = packageResolver ?? CipdArchiveResolver(cache),
+       super('flutter_runner_debug_symbols', cache, DevelopmentArtifact.flutterRunner);
 
   final VersionedPackageResolver packageResolver;
   final Platform _platform;
@@ -869,10 +870,13 @@ const List<List<String>> _windowsUwpDesktopBinaryDirs = <List<String>>[
 
 const List<List<String>> _macOSDesktopBinaryDirs = <List<String>>[
   <String>['darwin-x64', 'darwin-x64/FlutterMacOS.framework.zip'],
+  <String>['darwin-x64', 'darwin-x64/gen_snapshot.zip'],
   <String>['darwin-x64-profile', 'darwin-x64-profile/FlutterMacOS.framework.zip'],
   <String>['darwin-x64-profile', 'darwin-x64-profile/artifacts.zip'],
+  <String>['darwin-x64-profile', 'darwin-x64-profile/gen_snapshot.zip'],
   <String>['darwin-x64-release', 'darwin-x64-release/FlutterMacOS.framework.zip'],
   <String>['darwin-x64-release', 'darwin-x64-release/artifacts.zip'],
+  <String>['darwin-x64-release', 'darwin-x64-release/gen_snapshot.zip'],
 ];
 
 const List<List<String>> _osxBinaryDirs = <List<String>>[
