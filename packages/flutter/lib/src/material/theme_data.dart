@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:ui' show Color, hashList, lerpDouble;
+import 'dart:ui' show Color, lerpDouble;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -25,6 +25,7 @@ import 'dialog_theme.dart';
 import 'divider_theme.dart';
 import 'drawer_theme.dart';
 import 'elevated_button_theme.dart';
+import 'expansion_tile_theme.dart';
 import 'floating_action_button_theme.dart';
 import 'ink_splash.dart';
 import 'ink_well.dart' show InteractiveInkFeatureFactory;
@@ -201,12 +202,29 @@ enum MaterialTapTargetSize {
 class ThemeData with Diagnosticable {
   /// Create a [ThemeData] that's used to configure a [Theme].
   ///
-  /// Typically, only the [brightness], [primaryColor], or [primarySwatch] are
-  /// specified. That pair of values are used to construct the [colorScheme].
-  ///
   /// The [colorScheme] and [textTheme] are used by the Material components to
   /// compute default values for visual properties. The API documentation for
   /// each component widget explains exactly how the defaults are computed.
+  ///
+  /// When providing a [ColorScheme], apps can either provide one directly
+  /// with the [colorScheme] parameter, or have one generated for them by
+  /// using the [colorSchemeSeed] and [brightness] parameters. A generated
+  /// color scheme will be based on the tones of [colorSchemeSeed] and all of
+  /// its contrasting color will meet accessibility guidelines for readability.
+  /// (See [ColorScheme.fromSeed] for more details.)
+  ///
+  /// If the app wants to customize a generated color scheme, it can use
+  /// [ColorScheme.fromSeed] directly and then [ColorScheme.copyWith] on the
+  /// result to override any colors that need to be replaced. The result of
+  /// this can be used as the [colorScheme] directly.
+  ///
+  /// For historical reasons, instead of using a [colorSchemeSeed] or
+  /// [colorScheme], you can provide either a [primaryColor] or [primarySwatch]
+  /// to construct the [colorScheme], but the results will not be as complete
+  /// as when using generation from a seed color.
+  ///
+  /// If [colorSchemeSeed] is non-null then [colorScheme], [primaryColor] and
+  /// [primarySwatch] must all be null.
   ///
   /// The [textTheme] [TextStyle] colors are black if the color scheme's
   /// brightness is [Brightness.light], and white for [Brightness.dark].
@@ -220,6 +238,7 @@ class ThemeData with Diagnosticable {
   ///  * [ThemeData.from], which creates a ThemeData from a [ColorScheme].
   ///  * [ThemeData.light], which creates a light blue theme.
   ///  * [ThemeData.dark], which creates dark theme with a teal secondary [ColorScheme] color.
+  ///  * [ColorScheme.fromSeed], which is used to create a [ColorScheme] from a seed color.
   factory ThemeData({
     // GENERAL CONFIGURATION
     AndroidOverscrollIndicator? androidOverscrollIndicator,
@@ -235,9 +254,10 @@ class ThemeData with Diagnosticable {
     bool? useMaterial3,
     // COLOR
     // [colorScheme] is the preferred way to configure colors. The other color
-    // properties (as well as brightness, primaryColorBrightness, and primarySwatch)
+    // properties (as well as primaryColorBrightness, and primarySwatch)
     // will gradually be phased out, see https://github.com/flutter/flutter/issues/91772.
     ColorScheme? colorScheme,
+    Color? colorSchemeSeed,
     Brightness? brightness,
     MaterialColor? primarySwatch,
     Color? primaryColor,
@@ -304,6 +324,7 @@ class ThemeData with Diagnosticable {
     TimePickerThemeData? timePickerTheme,
     ToggleButtonsThemeData? toggleButtonsTheme,
     TooltipThemeData? tooltipTheme,
+    ExpansionTileThemeData? expansionTileTheme,
     // DEPRECATED (newest deprecations at the bottom)
     @Deprecated(
       'No longer used by the framework, please remove any reference to it. '
@@ -370,7 +391,6 @@ class ThemeData with Diagnosticable {
     Brightness? primaryColorBrightness,
   }) {
     // GENERAL CONFIGURATION
-    applyElevationOverlayColor ??= false;
     cupertinoOverrideTheme = cupertinoOverrideTheme?.noDefault();
     inputDecorationTheme ??= const InputDecorationTheme();
     platform ??= defaultTargetPlatform;
@@ -394,14 +414,41 @@ class ThemeData with Diagnosticable {
 
     // COLOR
     assert(colorScheme?.brightness == null || brightness == null || colorScheme!.brightness == brightness);
-    final Brightness _brightness = brightness ?? colorScheme?.brightness ?? Brightness.light;
-    final bool isDark = _brightness == Brightness.dark;
+    assert(colorSchemeSeed == null || colorScheme == null);
+    assert(colorSchemeSeed == null || primarySwatch == null);
+    assert(colorSchemeSeed == null || primaryColor == null);
+    final Brightness effectiveBrightness = brightness ?? colorScheme?.brightness ?? Brightness.light;
+    final bool isDark = effectiveBrightness == Brightness.dark;
+    if (colorSchemeSeed != null) {
+      colorScheme = ColorScheme.fromSeed(seedColor: colorSchemeSeed, brightness: effectiveBrightness);
+
+      // For surfaces that use primary color in light themes and surface color in dark
+      final Color primarySurfaceColor = isDark ? colorScheme.surface : colorScheme.primary;
+      final Color onPrimarySurfaceColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+
+      // Default some of the color settings to values from the color scheme
+      primaryColor = primarySurfaceColor;
+      primaryColorBrightness = ThemeData.estimateBrightnessForColor(primarySurfaceColor);
+      canvasColor ??= colorScheme.background;
+      accentColor ??= colorScheme.secondary;
+      accentColorBrightness ??= ThemeData.estimateBrightnessForColor(colorScheme.secondary);
+      scaffoldBackgroundColor ??= colorScheme.background;
+      bottomAppBarColor ??= colorScheme.surface;
+      cardColor ??= colorScheme.surface;
+      dividerColor ??= colorScheme.outline;
+      backgroundColor ??= colorScheme.background;
+      dialogBackgroundColor ??= colorScheme.background;
+      indicatorColor ??= onPrimarySurfaceColor;
+      errorColor ??= colorScheme.error;
+      applyElevationOverlayColor ??= isDark;
+    }
+    applyElevationOverlayColor ??= false;
     primarySwatch ??= Colors.blue;
     primaryColor ??= isDark ? Colors.grey[900]! : primarySwatch;
-    final Brightness _primaryColorBrightness = estimateBrightnessForColor(primaryColor);
+    final Brightness estimatedPrimaryColorBrightness = estimateBrightnessForColor(primaryColor);
     primaryColorLight ??= isDark ? Colors.grey[500]! : primarySwatch[100]!;
     primaryColorDark ??= isDark ? Colors.black : primarySwatch[700]!;
-    final bool primaryIsDark = _primaryColorBrightness == Brightness.dark;
+    final bool primaryIsDark = estimatedPrimaryColorBrightness == Brightness.dark;
     toggleableActiveColor ??= isDark ? Colors.tealAccent[200]! : (accentColor ?? primarySwatch[600]!);
     accentColor ??= isDark ? Colors.tealAccent[200]! : primarySwatch[500]!;
     accentColorBrightness ??= estimateBrightnessForColor(accentColor);
@@ -423,7 +470,7 @@ class ThemeData with Diagnosticable {
       cardColor: cardColor,
       backgroundColor: backgroundColor,
       errorColor: errorColor,
-      brightness: _brightness,
+      brightness: effectiveBrightness,
     );
     selectedRowColor ??= Colors.grey[100]!;
     unselectedWidgetColor ??= isDark ? Colors.white70 : Colors.black54;
@@ -452,7 +499,7 @@ class ThemeData with Diagnosticable {
     splashColor ??= isDark ? _kDarkThemeSplashColor : _kLightThemeSplashColor;
 
     // TYPOGRAPHY & ICONOGRAPHY
-    typography ??= Typography.material2014(platform: platform);
+    typography ??= useMaterial3 ? Typography.material2021(platform: platform) : Typography.material2014(platform: platform);
     TextTheme defaultTextTheme = isDark ? typography.white : typography.black;
     TextTheme defaultPrimaryTextTheme = primaryIsDark ? typography.white : typography.black;
     TextTheme defaultAccentTextTheme = accentIsDark ? typography.white : typography.black;
@@ -474,11 +521,7 @@ class ThemeData with Diagnosticable {
     bottomSheetTheme ??= const BottomSheetThemeData();
     buttonBarTheme ??= const ButtonBarThemeData();
     cardTheme ??= const CardTheme();
-    chipTheme ??= ChipThemeData.fromDefaults(
-      secondaryColor: isDark ? Colors.tealAccent[200]! : primaryColor,
-      brightness: colorScheme.brightness,
-      labelStyle: textTheme.bodyText1!,
-    );
+    chipTheme ??= const ChipThemeData();
     checkboxTheme ??= const CheckboxThemeData();
     dataTableTheme ??= const DataTableThemeData();
     dialogTheme ??= const DialogTheme();
@@ -503,6 +546,7 @@ class ThemeData with Diagnosticable {
     timePickerTheme ??= const TimePickerThemeData();
     toggleButtonsTheme ??= const ToggleButtonsThemeData();
     tooltipTheme ??= const TooltipThemeData();
+    expansionTileTheme ??= const ExpansionTileThemeData();
 
      // DEPRECATED (newest deprecations at the bottom)
     useTextSelectionTheme ??= true;
@@ -513,7 +557,7 @@ class ThemeData with Diagnosticable {
     accentIconTheme ??= accentIsDark ? const IconThemeData(color: Colors.white) : const IconThemeData(color: Colors.black);
     buttonColor ??= isDark ? primarySwatch[600]! : Colors.grey[300]!;
     fixTextFieldOutlineLabel ??= true;
-    primaryColorBrightness = _primaryColorBrightness;
+    primaryColorBrightness = estimatedPrimaryColorBrightness;
 
     return ThemeData.raw(
       // GENERAL CONFIGURATION
@@ -593,6 +637,7 @@ class ThemeData with Diagnosticable {
       timePickerTheme: timePickerTheme,
       toggleButtonsTheme: toggleButtonsTheme,
       tooltipTheme: tooltipTheme,
+      expansionTileTheme: expansionTileTheme,
       // DEPRECATED (newest deprecations at the bottom)
       useTextSelectionTheme: useTextSelectionTheme,
       textSelectionColor: textSelectionColor,
@@ -617,7 +662,7 @@ class ThemeData with Diagnosticable {
   /// [ThemeData] constructor.
   const ThemeData.raw({
     // Warning: make sure these properties are in the exact same order as in
-    // operator == and in the hashValues method and in the order of fields
+    // operator == and in the Object.hash method and in the order of fields
     // in this class, and in the lerp() method.
     // GENERAL CONFIGURATION
     required this.androidOverscrollIndicator,
@@ -699,6 +744,7 @@ class ThemeData with Diagnosticable {
     required this.timePickerTheme,
     required this.toggleButtonsTheme,
     required this.tooltipTheme,
+    required this.expansionTileTheme,
     // DEPRECATED (newest deprecations at the bottom)
     @Deprecated(
       'No longer used by the framework, please remove any reference to it. '
@@ -838,6 +884,7 @@ class ThemeData with Diagnosticable {
        assert(timePickerTheme != null),
        assert(toggleButtonsTheme != null),
        assert(tooltipTheme != null),
+       assert(expansionTileTheme != null),
         // DEPRECATED (newest deprecations at the bottom)
        assert(useTextSelectionTheme != null),
        assert(textSelectionColor != null),
@@ -941,7 +988,7 @@ class ThemeData with Diagnosticable {
   Brightness get brightness => colorScheme.brightness;
 
   // Warning: make sure these properties are in the exact same order as in
-  // hashValues() and in the raw constructor and in the order of fields in
+  // Object.hash() and in the raw constructor and in the order of fields in
   // the class and in the lerp() method.
 
   // GENERAL CONFIGURATION
@@ -1099,9 +1146,8 @@ class ThemeData with Diagnosticable {
   /// start using new colors, typography and other features of Material 3.
   /// If false, they will use the Material 2 look and feel.
   ///
-  /// Currently no components have been migrated to support Material 3.
-  /// As they are updated to include Material 3 support this documentation
-  /// will be modified to indicate exactly what widgets this flag will affect.
+  /// If true, the default Typography will be [Typography.material2021],
+  /// otherwise it will default to [Typography.material2014].
   ///
   /// During the migration to Material 3, turning this on may yield
   /// inconsistent look and feel in your app. Some components will be migrated
@@ -1112,6 +1158,11 @@ class ThemeData with Diagnosticable {
   /// that change has landed on stable, we will deprecate this flag and remove
   /// all uses of it. Everything will use the Material 3 look and feel at
   /// that point.
+  ///
+  /// Components that have been migrated to Material 3 are:
+  ///
+  ///   * [FloatingActionButton]
+  ///   * [NavigationBar]
   ///
   /// See also:
   ///
@@ -1373,6 +1424,9 @@ class ThemeData with Diagnosticable {
   /// This is the value returned from [TooltipTheme.of].
   final TooltipThemeData tooltipTheme;
 
+  /// A theme for customizing the visual properties of [ExpansionTile]s.
+  final ExpansionTileThemeData expansionTileTheme;
+
   // DEPRECATED (newest deprecations at the bottom)
 
   /// A temporary flag that was used to opt-in to the new [TextSelectionTheme]
@@ -1599,6 +1653,7 @@ class ThemeData with Diagnosticable {
     TimePickerThemeData? timePickerTheme,
     ToggleButtonsThemeData? toggleButtonsTheme,
     TooltipThemeData? tooltipTheme,
+    ExpansionTileThemeData? expansionTileTheme,
     // DEPRECATED (newest deprecations at the bottom)
     @Deprecated(
       'No longer used by the framework, please remove any reference to it. '
@@ -1743,6 +1798,7 @@ class ThemeData with Diagnosticable {
       timePickerTheme: timePickerTheme ?? this.timePickerTheme,
       toggleButtonsTheme: toggleButtonsTheme ?? this.toggleButtonsTheme,
       tooltipTheme: tooltipTheme ?? this.tooltipTheme,
+      expansionTileTheme: expansionTileTheme ?? this.expansionTileTheme,
       // DEPRECATED (newest deprecations at the bottom)
       useTextSelectionTheme: useTextSelectionTheme ?? this.useTextSelectionTheme,
       textSelectionColor: textSelectionColor ?? this.textSelectionColor,
@@ -1833,7 +1889,7 @@ class ThemeData with Diagnosticable {
     assert(b != null);
     assert(t != null);
     // Warning: make sure these properties are in the exact same order as in
-    // hashValues() and in the raw constructor and in the order of fields in
+    // Object.hash() and in the raw constructor and in the order of fields in
     // the class and in the lerp() method.
     return ThemeData.raw(
       // GENERAL CONFIGURATION
@@ -1913,6 +1969,7 @@ class ThemeData with Diagnosticable {
       timePickerTheme: TimePickerThemeData.lerp(a.timePickerTheme, b.timePickerTheme, t),
       toggleButtonsTheme: ToggleButtonsThemeData.lerp(a.toggleButtonsTheme, b.toggleButtonsTheme, t)!,
       tooltipTheme: TooltipThemeData.lerp(a.tooltipTheme, b.tooltipTheme, t)!,
+      expansionTileTheme: ExpansionTileThemeData.lerp(a.expansionTileTheme, b.expansionTileTheme, t)!,
       // DEPRECATED (newest deprecations at the bottom)
       useTextSelectionTheme: t < 0.5 ? a.useTextSelectionTheme : b.useTextSelectionTheme,
       textSelectionColor: Color.lerp(a.textSelectionColor, b.textSelectionColor, t)!,
@@ -1933,7 +1990,7 @@ class ThemeData with Diagnosticable {
     if (other.runtimeType != runtimeType)
       return false;
     // Warning: make sure these properties are in the exact same order as in
-    // hashValues() and in the raw constructor and in the order of fields in
+    // Object.hash() and in the raw constructor and in the order of fields in
     // the class and in the lerp() method.
     return other is ThemeData &&
         // GENERAL CONFIGURATION
@@ -2012,6 +2069,7 @@ class ThemeData with Diagnosticable {
         other.timePickerTheme == timePickerTheme &&
         other.toggleButtonsTheme == toggleButtonsTheme &&
         other.tooltipTheme == tooltipTheme &&
+        other.expansionTileTheme == expansionTileTheme &&
         // DEPRECATED (newest deprecations at the bottom)
         other.useTextSelectionTheme == useTextSelectionTheme &&
         other.textSelectionColor == textSelectionColor &&
@@ -2109,6 +2167,7 @@ class ThemeData with Diagnosticable {
       timePickerTheme,
       toggleButtonsTheme,
       tooltipTheme,
+      expansionTileTheme,
       // DEPRECATED (newest deprecations at the bottom)
       useTextSelectionTheme,
       textSelectionColor,
@@ -2122,7 +2181,7 @@ class ThemeData with Diagnosticable {
       fixTextFieldOutlineLabel,
       primaryColorBrightness,
     ];
-    return hashList(values);
+    return Object.hashAll(values);
   }
 
   @override
@@ -2206,6 +2265,7 @@ class ThemeData with Diagnosticable {
     properties.add(DiagnosticsProperty<TimePickerThemeData>('timePickerTheme', timePickerTheme, defaultValue: defaultData.timePickerTheme, level: DiagnosticLevel.debug));
     properties.add(DiagnosticsProperty<ToggleButtonsThemeData>('toggleButtonsTheme', toggleButtonsTheme, level: DiagnosticLevel.debug));
     properties.add(DiagnosticsProperty<TooltipThemeData>('tooltipTheme', tooltipTheme, level: DiagnosticLevel.debug));
+    properties.add(DiagnosticsProperty<ExpansionTileThemeData>('expansionTileTheme', expansionTileTheme, level: DiagnosticLevel.debug));
     // DEPRECATED (newest deprecations at the bottom)
     properties.add(DiagnosticsProperty<bool>('useTextSelectionTheme', useTextSelectionTheme, level: DiagnosticLevel.debug));
     properties.add(ColorProperty('textSelectionColor', textSelectionColor, defaultValue: defaultData.textSelectionColor, level: DiagnosticLevel.debug));
@@ -2565,7 +2625,7 @@ class VisualDensity with Diagnosticable {
   static VisualDensity lerp(VisualDensity a, VisualDensity b, double t) {
     return VisualDensity(
       horizontal: lerpDouble(a.horizontal, b.horizontal, t)!,
-      vertical: lerpDouble(a.horizontal, b.horizontal, t)!,
+      vertical: lerpDouble(a.vertical, b.vertical, t)!,
     );
   }
 
@@ -2593,7 +2653,7 @@ class VisualDensity with Diagnosticable {
   }
 
   @override
-  int get hashCode => hashValues(horizontal, vertical);
+  int get hashCode => Object.hash(horizontal, vertical);
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {

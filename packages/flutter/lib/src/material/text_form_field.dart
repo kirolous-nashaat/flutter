@@ -31,6 +31,8 @@ export 'package:flutter/services.dart' show SmartQuotesType, SmartDashesType;
 /// If a [controller] is not specified, [initialValue] can be used to give
 /// the automatically generated controller an initial value.
 ///
+/// {@macro flutter.material.textfield.wantKeepAlive}
+///
 /// Remember to call [TextEditingController.dispose] of the [TextEditingController]
 /// when it is no longer needed. This will ensure we discard any resources used
 /// by the object.
@@ -141,7 +143,7 @@ class TextFormField extends FormField<String> {
     Color? cursorColor,
     Brightness? keyboardAppearance,
     EdgeInsets scrollPadding = const EdgeInsets.all(20.0),
-    bool enableInteractiveSelection = true,
+    bool? enableInteractiveSelection,
     TextSelectionControls? selectionControls,
     InputCounterWidgetBuilder? buildCounter,
     ScrollPhysics? scrollPhysics,
@@ -177,7 +179,6 @@ class TextFormField extends FormField<String> {
        ),
        assert(!obscureText || maxLines == 1, 'Obscured fields cannot be multiline.'),
        assert(maxLength == null || maxLength == TextField.noMaxLength || maxLength > 0),
-       assert(enableInteractiveSelection != null),
        assert(enableIMEPersonalizedLearning != null),
        super(
          key: key,
@@ -241,7 +242,7 @@ class TextFormField extends FormField<String> {
                scrollPadding: scrollPadding,
                scrollPhysics: scrollPhysics,
                keyboardAppearance: keyboardAppearance,
-               enableInteractiveSelection: enableInteractiveSelection,
+               enableInteractiveSelection: enableInteractiveSelection ?? (!obscureText || !readOnly),
                selectionControls: selectionControls,
                buildCounter: buildCounter,
                autofillHints: autofillHints,
@@ -265,10 +266,9 @@ class TextFormField extends FormField<String> {
 class _TextFormFieldState extends FormFieldState<String> {
   RestorableTextEditingController? _controller;
 
-  TextEditingController get _effectiveController => widget.controller ?? _controller!.value;
+  TextEditingController get _effectiveController => _textFormField.controller ?? _controller!.value;
 
-  @override
-  TextFormField get widget => super.widget as TextFormField;
+  TextFormField get _textFormField => super.widget as TextFormField;
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
@@ -299,26 +299,26 @@ class _TextFormFieldState extends FormFieldState<String> {
   @override
   void initState() {
     super.initState();
-    if (widget.controller == null) {
+    if (_textFormField.controller == null) {
       _createLocalController(widget.initialValue != null ? TextEditingValue(text: widget.initialValue!) : null);
     } else {
-      widget.controller!.addListener(_handleControllerChanged);
+      _textFormField.controller!.addListener(_handleControllerChanged);
     }
   }
 
   @override
   void didUpdateWidget(TextFormField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.controller != oldWidget.controller) {
+    if (_textFormField.controller != oldWidget.controller) {
       oldWidget.controller?.removeListener(_handleControllerChanged);
-      widget.controller?.addListener(_handleControllerChanged);
+      _textFormField.controller?.addListener(_handleControllerChanged);
 
-      if (oldWidget.controller != null && widget.controller == null) {
+      if (oldWidget.controller != null && _textFormField.controller == null) {
         _createLocalController(oldWidget.controller!.value);
       }
 
-      if (widget.controller != null) {
-        setValue(widget.controller!.text);
+      if (_textFormField.controller != null) {
+        setValue(_textFormField.controller!.text);
         if (oldWidget.controller == null) {
           unregisterFromRestoration(_controller!);
           _controller!.dispose();
@@ -330,7 +330,7 @@ class _TextFormFieldState extends FormFieldState<String> {
 
   @override
   void dispose() {
-    widget.controller?.removeListener(_handleControllerChanged);
+    _textFormField.controller?.removeListener(_handleControllerChanged);
     _controller?.dispose();
     super.dispose();
   }

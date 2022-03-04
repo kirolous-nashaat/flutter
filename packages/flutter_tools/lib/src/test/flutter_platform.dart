@@ -345,8 +345,6 @@ class FlutterPlatform extends PlatformPlugin {
     return controller.suite;
   }
 
-  @override
-  // ignore: override_on_non_overriding_member
   StreamChannel<dynamic> loadChannel(String path, SuitePlatform platform) {
     if (_testCount > 0) {
       // Fail if there will be a port conflict.
@@ -390,7 +388,7 @@ class FlutterPlatform extends PlatformPlugin {
     bool isStatic,
   ) async {
     if (compiler == null || compiler.compiler == null) {
-      throw 'Compiler is not set up properly to compile $expression';
+      throw Exception('Compiler is not set up properly to compile $expression');
     }
     final CompilerOutput compilerOutput =
       await compiler.compiler.compileExpression(expression, definitions,
@@ -398,7 +396,7 @@ class FlutterPlatform extends PlatformPlugin {
     if (compilerOutput != null && compilerOutput.expressionData != null) {
       return base64.encode(compilerOutput.expressionData);
     }
-    throw 'Failed to compile $expression';
+    throw Exception('Failed to compile $expression');
   }
 
   TestDevice _createTestDevice(int ourTestCount) {
