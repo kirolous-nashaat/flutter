@@ -148,14 +148,14 @@ class CalendarDatePicker extends StatefulWidget {
   /// Function to provide full control over which dates in the calendar can be selected.
   final SelectableDayPredicate? selectableDayPredicate;
 
-  /// The box decoration of selected day.
-  final BoxDecoration? selectedDayDecoration;
+  /// The decoration of selected day.
+  final Decoration? selectedDayDecoration;
 
-  /// The box decoration of disabled day.
-  final BoxDecoration? disabledDayDecoration;
+  /// The decoration of disabled day.
+  final Decoration? disabledDayDecoration;
 
-  /// The box decoration of today.
-  final BoxDecoration? todayDecoration;
+  /// The decoration of today.
+  final Decoration? todayDecoration;
 
   @override
   State<CalendarDatePicker> createState() => _CalendarDatePickerState();
@@ -501,14 +501,14 @@ class _MonthPicker extends StatefulWidget {
   /// Optional user supplied predicate function to customize selectable days.
   final SelectableDayPredicate? selectableDayPredicate;
 
-  /// The box decoration of selected day.
-  final BoxDecoration? selectedDayDecoration;
+  /// The decoration of selected day.
+  final Decoration? selectedDayDecoration;
 
-  /// The box decoration of disabled day.
-  final BoxDecoration? disabledDayDecoration;
+  /// The decoration of disabled day.
+  final Decoration? disabledDayDecoration;
 
-  /// The box decoration of today.
-  final BoxDecoration? todayDecoration;
+  /// The decoration of today.
+  final Decoration? todayDecoration;
 
   @override
   _MonthPickerState createState() => _MonthPickerState();
@@ -911,13 +911,13 @@ class _DayPicker extends StatefulWidget {
   final SelectableDayPredicate? selectableDayPredicate;
 
   /// The box decoration of selected day.
-  final BoxDecoration? selectedDayDecoration;
+  final Decoration? selectedDayDecoration;
 
-  /// The box decoration of disabled day.
-  final BoxDecoration? disabledDayDecoration;
+  /// The decoration of disabled day.
+  final Decoration? disabledDayDecoration;
 
-  /// The box decoration of today.
-  final BoxDecoration? todayDecoration;
+  /// The decoration of today.
+  final Decoration? todayDecoration;
 
   @override
   _DayPickerState createState() => _DayPickerState();
@@ -1024,7 +1024,7 @@ class _DayPickerState extends State<_DayPicker> {
         final bool isSelectedDay = DateUtils.isSameDay(widget.selectedDate, dayToBuild);
         final bool isToday = DateUtils.isSameDay(widget.currentDate, dayToBuild);
 
-        BoxDecoration? decoration;
+        Decoration? decoration;
         Color dayColor = enabledDayColor;
         if (isSelectedDay) {
           // The selected day gets a circle background highlight, and a

@@ -66,14 +66,14 @@ class DatePickerThemeData with Diagnosticable {
   /// The default shape is a [RoundedRectangleBorder] with a radius of 4.0
   final ShapeBorder? shape;
 
-  /// The box decoration of selected day.
-  final BoxDecoration? selectedDayDecoration;
+  /// The decoration of selected day.
+  final Decoration? selectedDayDecoration;
 
-  /// The box decoration of disabled day.
-  final BoxDecoration? disabledDayDecoration;
+  /// The decoration of disabled day.
+  final Decoration? disabledDayDecoration;
 
-  /// The box decoration of today.
-  final BoxDecoration? todayDecoration;
+  /// The decoration of today; only applied when it is neither selected nor disabled.
+  final Decoration? todayDecoration;
 
   /// Creates a copy of this object with the given fields replaced with the
   /// new values.
@@ -82,9 +82,9 @@ class DatePickerThemeData with Diagnosticable {
     Color? entryModeIconColor,
     TextStyle? helpTextStyle,
     ShapeBorder? shape,
-    BoxDecoration? selectedDayDecoration,
-    BoxDecoration? disabledDayDecoration,
-    BoxDecoration? todayDecoration,
+    Decoration? selectedDayDecoration,
+    Decoration? disabledDayDecoration,
+    Decoration? todayDecoration,
   }) {
     return DatePickerThemeData(
       backgroundColor: backgroundColor ?? this.backgroundColor,
@@ -101,7 +101,6 @@ class DatePickerThemeData with Diagnosticable {
   ///
   /// The argument `t` must not be null.
   ///
-  /// {@macro dart.ui.shadow.lerp}
   static DatePickerThemeData lerp(DatePickerThemeData? a, DatePickerThemeData? b, double t) {
     assert(t != null);
     return DatePickerThemeData(
@@ -109,9 +108,9 @@ class DatePickerThemeData with Diagnosticable {
       entryModeIconColor: Color.lerp(a?.entryModeIconColor, b?.entryModeIconColor, t),
       helpTextStyle: TextStyle.lerp(a?.helpTextStyle, b?.helpTextStyle, t),
       shape: ShapeBorder.lerp(a?.shape, b?.shape, t),
-      selectedDayDecoration: BoxDecoration.lerp(a?.selectedDayDecoration, b?.selectedDayDecoration, t),
-      disabledDayDecoration: BoxDecoration.lerp(a?.disabledDayDecoration, b?.disabledDayDecoration, t),
-      todayDecoration: BoxDecoration.lerp(a?.todayDecoration, b?.todayDecoration, t),
+      selectedDayDecoration: Decoration.lerp(a?.selectedDayDecoration, b?.selectedDayDecoration, t),
+      disabledDayDecoration: Decoration.lerp(a?.disabledDayDecoration, b?.disabledDayDecoration, t),
+      todayDecoration: Decoration.lerp(a?.todayDecoration, b?.todayDecoration, t),
     );
   }
 
@@ -151,9 +150,9 @@ class DatePickerThemeData with Diagnosticable {
     properties.add(ColorProperty('entryModeIconColor', entryModeIconColor, defaultValue: null));
     properties.add(DiagnosticsProperty<TextStyle>('helpTextStyle', helpTextStyle, defaultValue: null));
     properties.add(DiagnosticsProperty<ShapeBorder>('shape', shape, defaultValue: null));
-    properties.add(DiagnosticsProperty<BoxDecoration>('selectedDayDecoration', selectedDayDecoration, defaultValue: null));
-    properties.add(DiagnosticsProperty<BoxDecoration>('disabledDayDecoration', disabledDayDecoration, defaultValue: null));
-    properties.add(DiagnosticsProperty<BoxDecoration>('todayDecoration', todayDecoration, defaultValue: null));
+    properties.add(DiagnosticsProperty<Decoration>('selectedDayDecoration', selectedDayDecoration, defaultValue: null));
+    properties.add(DiagnosticsProperty<Decoration>('disabledDayDecoration', disabledDayDecoration, defaultValue: null));
+    properties.add(DiagnosticsProperty<Decoration>('todayDecoration', todayDecoration, defaultValue: null));
   }
 }
 
